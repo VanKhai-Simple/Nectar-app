@@ -1,9 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+
 
 export default function VerificationScreen({ navigation }) {
   const [code, setCode] = useState('');
+
+  const handleVerify = () => {
+    if (code.length === 4) {
+      navigation.navigate('Location'); // Chuyển sang màn hình chọn vị trí
+    } else {
+      alert("Mã xác thực phải đủ 4 số");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -31,7 +42,7 @@ export default function VerificationScreen({ navigation }) {
         
         <TouchableOpacity 
           style={styles.nextBtn}
-          onPress={() => navigation.navigate('Location')}
+          onPress={handleVerify}
         >
           <Ionicons name="chevron-forward" size={30} color="#fff" />
         </TouchableOpacity>

@@ -26,12 +26,33 @@ export const AppProvider = ({ children }) => {
       } catch (e) {
         console.log(e);
       } finally {
-        // Giả lập delay 2s để hiện màn hình Splash cho đẹp
         setTimeout(() => setIsLoading(false), 2000);
       }
     };
     checkStatus();
   }, []);
+
+  // --- THÊM CÁC HÀM NÀY ---
+
+  // Hàm xử lý đăng nhập
+  const login = async () => {
+    try {
+      await AsyncStorage.setItem("isLoggedIn", "true");
+      setIsLoggedIn(true);
+    } catch (e) {
+      console.log("Lỗi khi login:", e);
+    }
+  };
+
+  // Hàm xử lý đăng xuất (nếu cần dùng ở màn Profile sau này)
+  const logout = async () => {
+    try {
+      await AsyncStorage.removeItem("isLoggedIn");
+      setIsLoggedIn(false);
+    } catch (e) {
+      console.log("Lỗi khi logout:", e);
+    }
+  };
 
   const completeOnboarding = async () => {
     await AsyncStorage.setItem("alreadyLaunched", "true");
@@ -39,7 +60,18 @@ export const AppProvider = ({ children }) => {
   };
 
   return (
-    <AppContext.Provider value={{ isLoggedIn, setIsLoggedIn, isFirstLaunch, completeOnboarding, isLoading }}>
+    // Bổ sung 'login' và 'logout' vào value bên dưới
+    <AppContext.Provider 
+      value={{ 
+        isLoggedIn, 
+        setIsLoggedIn, 
+        isFirstLaunch, 
+        completeOnboarding, 
+        isLoading,
+        login, 
+        logout 
+      }}
+    >
       {children}
     </AppContext.Provider>
   );

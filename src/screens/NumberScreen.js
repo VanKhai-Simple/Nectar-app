@@ -1,9 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, SafeAreaView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Hoặc thư viện icon bạn dùng
+import { View, Text, StyleSheet, TouchableOpacity, TextInput , Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+
 
 export default function NumberScreen({ navigation }) {
   const [number, setNumber] = useState('');
+
+  const handleNext = () => {
+    // Logic: Nếu số điện thoại từ 5-10 ký tự thì cho qua
+    if (number.length >= 5 && number.length <= 10) {
+      navigation.navigate('Verification'); // Đảm bảo tên 'Verification' giống trong AppNavigation
+    } else {
+      alert("Vui lòng nhập từ 5 đến 10 số");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -32,7 +44,7 @@ export default function NumberScreen({ navigation }) {
       {/* Nút Next tròn màu xanh */}
       <TouchableOpacity 
         style={[styles.nextBtn, { opacity: number.length > 5 ? 1 : 0.5 }]}
-        onPress={() => { /* Chuyển sang màn Verification */ }}
+        onPress={() =>  handleNext()}
       >
         <Ionicons name="chevron-forward" size={30} color="#fff" />
       </TouchableOpacity>
