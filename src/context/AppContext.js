@@ -14,17 +14,10 @@ export const AppProvider = ({ children }) => {
         const firstLaunch = await AsyncStorage.getItem("alreadyLaunched");
         const loginStatus = await AsyncStorage.getItem("isLoggedIn");
 
-        if (firstLaunch === null) {
-          setIsFirstLaunch(true);
-        } else {
-          setIsFirstLaunch(false);
-        }
-
-        if (loginStatus !== null) {
-          setIsLoggedIn(JSON.parse(loginStatus));
-        }
+        setIsFirstLaunch(firstLaunch === null);
+        setIsLoggedIn(loginStatus === "true");
       } catch (e) {
-        console.log(e);
+        console.error(e);
       } finally {
         setTimeout(() => setIsLoading(false), 2000);
       }
@@ -32,42 +25,47 @@ export const AppProvider = ({ children }) => {
     checkStatus();
   }, []);
 
-  // --- THÊM CÁC HÀM NÀY ---
+  const completeOnboarding = async () => {
+    try {
+      await AsyncStorage.setItem("alreadyLaunched", "true");
+      setIsFirstLaunch(false);
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
-  // Hàm xử lý đăng nhập
   const login = async () => {
     try {
       await AsyncStorage.setItem("isLoggedIn", "true");
       setIsLoggedIn(true);
     } catch (e) {
-      console.log("Lỗi khi login:", e);
+      console.log(e);
     }
   };
 
-  // Hàm xử lý đăng xuất (nếu cần dùng ở màn Profile sau này)
+  // --- HÀM LOGOUT MỚI THEO Ý BẠN ---
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem("isLoggedIn");
+      // 1. Xóa sạch dấu vết trong bộ nhớ máy
+      await AsyncStorage.multiRemove(["isLoggedIn", "alreadyLaunched"]);
+      
+      // 2. Cập nhật State để UI tự động nhảy về Onboarding
       setIsLoggedIn(false);
+      setIsFirstLaunch(true); 
+      
+      console.log("Đã đăng xuất và reset Onboarding thành công!");
     } catch (e) {
-      console.log("Lỗi khi logout:", e);
+      console.log("Lỗi khi reset app:", e);
     }
-  };
-
-  const completeOnboarding = async () => {
-    await AsyncStorage.setItem("alreadyLaunched", "true");
-    setIsFirstLaunch(false);
   };
 
   return (
-    // Bổ sung 'login' và 'logout' vào value bên dưới
     <AppContext.Provider 
       value={{ 
+        isLoading, 
         isLoggedIn, 
-        setIsLoggedIn, 
         isFirstLaunch, 
         completeOnboarding, 
-        isLoading,
         login, 
         logout 
       }}
