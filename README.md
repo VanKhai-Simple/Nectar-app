@@ -19,4 +19,8 @@ B4 : Thao tác ....
 
 https://github.com/user-attachments/assets/cf7a857b-78a9-46ff-a9c1-fbdcd3968a15
 
+<img width="379" height="849" alt="image" src="https://github.com/user-attachments/assets/21ee3db9-7b47-438a-8e77-979e84e3128b" />
+<img width="351" height="772" alt="image" src="https://github.com/user-attachments/assets/3702e24c-f89d-40bc-be6c-e051b44b939b" />
+<img width="346" height="770" alt="image" src="https://github.com/user-attachments/assets/51db4ed2-2e94-4659-abf5-7f9563e5358e" />
+<img width="340" height="777" alt="image" src="https://github.com/user-attachments/assets/b7d46078-b929-4855-9a1d-ed23b012b737" />
 
