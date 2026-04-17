@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { AppContext } from '../context/AppContext';
 
+import TabNavigator from './TabNavigator';
 // Import các màn hình của bạn
 import SplashScreen from '../screens/SplashScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
@@ -13,6 +14,8 @@ import VerificationScreen from '../screens/VerificationScreen';
 import LocationScreen from '../screens/LocationScreen';
 import LoginScreen from '../screens/LoginScreen';
 import SignupScreen from '../screens/SignupScreen';
+import ProductDetailScreen from '../screens/ProductDetailScreen';
+import BeveragesScreen from '../screens/BeveragesScreen';
 
 // Tạo nhanh màn hình Home tạm thời để kiểm tra đăng nhập thành công
 const TempHomeScreen = () => {
@@ -58,7 +61,12 @@ export default function AppNavigation() {
         ) : (
           // 4. Nếu đã đăng nhập thành công: Hiện màn hình chính (Home)
           // Quan trọng: Phải đặt tên khác với "SignIn" để tránh lỗi navigate
-          <Stack.Screen name="Home" component={TempHomeScreen} />
+          // <Stack.Screen name="Home" component={TempHomeScreen} />
+          <>
+            <Stack.Screen name="MainTabs" component={TabNavigator} />
+            <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+            <Stack.Screen name="Beverages" component={BeveragesScreen} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
