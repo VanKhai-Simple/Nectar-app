@@ -8,6 +8,8 @@ export const AppProvider = ({ children }) => {
   const [isFirstLaunch, setIsFirstLaunch] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [cart, setCart] = useState([]);
+
   useEffect(() => {
     const checkStatus = async () => {
       try {
@@ -52,11 +54,57 @@ export const AppProvider = ({ children }) => {
       // 2. Cập nhật State để UI tự động nhảy về Onboarding
       setIsLoggedIn(false);
       setIsFirstLaunch(true); 
-      
+      setCart([]);
       console.log("Đã đăng xuất và reset Onboarding thành công!");
     } catch (e) {
       console.log("Lỗi khi reset app:", e);
     }
+  };
+
+  // --- THÊM HÀM THÊM VÀO GIỎ ---
+  const addToCart = (product) => {
+    setCart((prevCart) => {
+      // Kiểm tra sản phẩm đã tồn tại chưa
+      const existingItem = prevCart.find(item => item.id === product.id);
+      if (existingItem) {
+        // Nếu có rồi thì tăng số lượng
+        return prevCart.map(item =>
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+      // Nếu chưa có thì thêm mới với số lượng là 1
+      return [...prevCart, { ...product, quantity: 1 }];
+    });
+  };
+
+  // Trong AppProvider của AppContext.js thêm:
+  const [favorites, setFavorites] = useState([]);
+
+  const toggleFavorite = (product) => {
+    setFavorites((prev) => {
+      const isExist = prev.find(item => item.id === product.id);
+      if (isExist) {
+        return prev.filter(item => item.id !== product.id); // Bỏ thích
+      }
+      return [...prev, product]; // Thêm thích
+    }); 
+  };
+
+  // --- THÊM HÀM TĂNG/GIẢM/XÓA (Để dùng cho màn MyCart) ---
+  const updateQuantity = (id, type) => {
+    setCart((prevCart) => 
+      prevCart.map(item => {
+        if (item.id === id) {
+          const newQty = type === 'inc' ? item.quantity + 1 : item.quantity - 1;
+          return { ...item, quantity: newQty > 0 ? newQty : 1 };
+        }
+        return item;
+      })
+    );
+  };
+
+  const removeFromCart = (id) => {
+    setCart((prevCart) => prevCart.filter(item => item.id !== id));
   };
 
   return (
@@ -67,7 +115,13 @@ export const AppProvider = ({ children }) => {
         isFirstLaunch, 
         completeOnboarding, 
         login, 
-        logout 
+        logout ,
+        cart,
+        addToCart,
+        updateQuantity,
+        removeFromCart,
+        favorites,
+        toggleFavorite
       }}
     >
       {children}

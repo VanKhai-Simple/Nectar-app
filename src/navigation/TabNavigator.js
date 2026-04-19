@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 // Import các màn hình chính
 import HomeScreen from '../screens/HomeScreen';
 import ExploreScreen from '../screens/ExploreScreen';
+import FavoriteScreen from '../screens/FavoriteScreen';
+import MyCart from '../screens/MyCart';
 
 // Các màn hình tạm thời (nếu bạn chưa tạo file riêng)
 import { View, Text } from 'react-native';
@@ -49,8 +51,8 @@ export default function TabNavigator() {
     >
       <Tab.Screen name="Shop" component={HomeScreen} />
       <Tab.Screen name="Explore" component={ExploreScreen} />
-      <Tab.Screen name="Cart" component={CartPlaceholder} />
-      <Tab.Screen name="Favourite" component={FavouritePlaceholder} />
+      <Tab.Screen name="Cart" component={MyCart} />
+      <Tab.Screen name="Favourite" component={FavoriteScreen} />
       <Tab.Screen name="Account" component={AccountPlaceholder} />
     </Tab.Navigator>
   );
