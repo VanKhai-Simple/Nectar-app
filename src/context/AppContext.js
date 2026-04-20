@@ -1,101 +1,117 @@
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import CryptoJS from "crypto-js";
 
 export const AppContext = createContext();
+
+const SECRET_KEY = "Nectar_Secret_Key_2026"; // Khóa để mã hóa dữ liệu
 
 export const AppProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isFirstLaunch, setIsFirstLaunch] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-
   const [cart, setCart] = useState([]);
+  const [favorites, setFavorites] = useState([]);
+  const [orders, setOrders] = useState([]); // Quản lý đơn hàng
 
+  // --- UTILS: MÃ HÓA & GIẢI MÃ ---
+  const encryptData = (data) => CryptoJS.AES.encrypt(JSON.stringify(data), SECRET_KEY).toString();
+  const decryptData = (ciphertext) => {
+    try {
+      const bytes = CryptoJS.AES.decrypt(ciphertext, SECRET_KEY);
+      return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+    } catch (e) { return null; }
+  };
+
+  // --- 1. KHỞI CHẠY APP (AUTO LOGIN & LOAD DATA) ---
   useEffect(() => {
-    const checkStatus = async () => {
+    const initApp = async () => {
       try {
         const firstLaunch = await AsyncStorage.getItem("alreadyLaunched");
-        const loginStatus = await AsyncStorage.getItem("isLoggedIn");
+        const encryptedAuth = await AsyncStorage.getItem("userAuth");
+        const encryptedCart = await AsyncStorage.getItem("userCart");
+        const encryptedOrders = await AsyncStorage.getItem("userOrders");
 
         setIsFirstLaunch(firstLaunch === null);
-        setIsLoggedIn(loginStatus === "true");
+
+        // Kiểm tra Login & Hết hạn (24h)
+        if (encryptedAuth) {
+          const auth = decryptData(encryptedAuth);
+          const now = Date.now();
+          if (auth && now - auth.loginAt < 24 * 60 * 60 * 1000) {
+            setIsLoggedIn(true);
+          } else {
+            await logout(); // Hết hạn thì đá ra ngoài
+          }
+        }
+
+        if (encryptedCart) setCart(decryptData(encryptedCart) || []);
+        if (encryptedOrders) setOrders(decryptData(encryptedOrders) || []);
+
       } catch (e) {
-        console.error(e);
+        console.error("Lỗi load dữ liệu:", e);
       } finally {
+        // Tạo hiệu ứng Loading/Skeleton 2s như yêu cầu
         setTimeout(() => setIsLoading(false), 2000);
       }
     };
-    checkStatus();
+    initApp();
   }, []);
 
+  // --- 2. TỰ ĐỘNG LƯU KHI STATE THAY ĐỔI (CART & ORDERS) ---
+  useEffect(() => {
+    if (!isLoading) {
+      AsyncStorage.setItem("userCart", encryptData(cart));
+    }
+  }, [cart]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      AsyncStorage.setItem("userOrders", encryptData(orders));
+    }
+  }, [orders]);
+
+  // --- 3. CHỨC NĂNG XÁC THỰC ---
   const completeOnboarding = async () => {
-    try {
-      await AsyncStorage.setItem("alreadyLaunched", "true");
-      setIsFirstLaunch(false);
-    } catch (e) {
-      console.log(e);
-    }
+    await AsyncStorage.setItem("alreadyLaunched", "true");
+    setIsFirstLaunch(false);
   };
 
-  const login = async () => {
-    try {
-      await AsyncStorage.setItem("isLoggedIn", "true");
-      setIsLoggedIn(true);
-    } catch (e) {
-      console.log(e);
-    }
+  const login = async (userData = {}) => {
+    const authData = { ...userData, loginAt: Date.now() };
+    await AsyncStorage.setItem("userAuth", encryptData(authData));
+    setIsLoggedIn(true);
   };
 
-  // --- HÀM LOGOUT MỚI THEO Ý BẠN ---
   const logout = async () => {
     try {
-      // 1. Xóa sạch dấu vết trong bộ nhớ máy
-      await AsyncStorage.multiRemove(["isLoggedIn", "alreadyLaunched"]);
-      
-      // 2. Cập nhật State để UI tự động nhảy về Onboarding
+      // Xóa toàn bộ dữ liệu khỏi Storage theo yêu cầu
+      await AsyncStorage.multiRemove(["userAuth", "userCart", "userOrders"]);
       setIsLoggedIn(false);
-      setIsFirstLaunch(true); 
       setCart([]);
-      console.log("Đã đăng xuất và reset Onboarding thành công!");
-    } catch (e) {
-      console.log("Lỗi khi reset app:", e);
-    }
+      setOrders([]);
+      setIsFirstLaunch(true); // Quay về Onboarding nếu muốn reset sạch
+    } catch (e) { console.log(e); }
   };
 
-  // --- THÊM HÀM THÊM VÀO GIỎ ---
+  // --- 4. CHỨC NĂNG GIỎ HÀNG ---
   const addToCart = (product) => {
-    setCart((prevCart) => {
-      // Kiểm tra sản phẩm đã tồn tại chưa
-      const existingItem = prevCart.find(item => item.id === product.id);
-      if (existingItem) {
-        // Nếu có rồi thì tăng số lượng
-        return prevCart.map(item =>
+    setCart((prev) => {
+      const exist = prev.find((item) => item.id === product.id);
+      if (exist) {
+        return prev.map((item) =>
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      // Nếu chưa có thì thêm mới với số lượng là 1
-      return [...prevCart, { ...product, quantity: 1 }];
+      return [...prev, { ...product, quantity: 1 }];
     });
   };
 
-  // Trong AppProvider của AppContext.js thêm:
-  const [favorites, setFavorites] = useState([]);
-
-  const toggleFavorite = (product) => {
-    setFavorites((prev) => {
-      const isExist = prev.find(item => item.id === product.id);
-      if (isExist) {
-        return prev.filter(item => item.id !== product.id); // Bỏ thích
-      }
-      return [...prev, product]; // Thêm thích
-    }); 
-  };
-
-  // --- THÊM HÀM TĂNG/GIẢM/XÓA (Để dùng cho màn MyCart) ---
   const updateQuantity = (id, type) => {
-    setCart((prevCart) => 
-      prevCart.map(item => {
+    setCart((prev) =>
+      prev.map((item) => {
         if (item.id === id) {
-          const newQty = type === 'inc' ? item.quantity + 1 : item.quantity - 1;
+          const newQty = type === "inc" ? item.quantity + 1 : item.quantity - 1;
           return { ...item, quantity: newQty > 0 ? newQty : 1 };
         }
         return item;
@@ -104,24 +120,38 @@ export const AppProvider = ({ children }) => {
   };
 
   const removeFromCart = (id) => {
-    setCart((prevCart) => prevCart.filter(item => item.id !== id));
+    setCart((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  // --- 5. CHỨC NĂNG ĐƠN HÀNG (CHECKOUT) ---
+  const checkout = async () => {
+    if (cart.length === 0) return;
+    const newOrder = {
+      id: "ORD" + Date.now(),
+      items: [...cart],
+      total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      time: new Date().toLocaleString("vi-VN"),
+    };
+    setOrders((prev) => [newOrder, ...prev]);
+    setCart([]); // Đặt xong thì sạch giỏ
+    return true;
+  };
+
+  const toggleFavorite = (product) => {
+    setFavorites((prev) => {
+      const isExist = prev.find((item) => item.id === product.id);
+      return isExist ? prev.filter((item) => item.id !== product.id) : [...prev, product];
+    });
   };
 
   return (
-    <AppContext.Provider 
-      value={{ 
-        isLoading, 
-        isLoggedIn, 
-        isFirstLaunch, 
-        completeOnboarding, 
-        login, 
-        logout ,
-        cart,
-        addToCart,
-        updateQuantity,
-        removeFromCart,
-        favorites,
-        toggleFavorite
+    <AppContext.Provider
+      value={{
+        isLoading, isLoggedIn, isFirstLaunch,
+        completeOnboarding, login, logout,
+        cart, addToCart, updateQuantity, removeFromCart,
+        favorites, toggleFavorite,
+        orders, checkout,
       }}
     >
       {children}

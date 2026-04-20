@@ -10,6 +10,7 @@ import MyCart from '../screens/MyCart';
 
 // Các màn hình tạm thời (nếu bạn chưa tạo file riêng)
 import { View, Text } from 'react-native';
+import ProfileScreen from '../screens/ProfileScreen';
 const CartPlaceholder = () => <View style={{flex:1, justifyContent:'center', alignItems:'center'}}><Text>Cart Screen</Text></View>;
 const FavouritePlaceholder = () => <View style={{flex:1, justifyContent:'center', alignItems:'center'}}><Text>Favourite Screen</Text></View>;
 const AccountPlaceholder = () => <View style={{flex:1, justifyContent:'center', alignItems:'center'}}><Text>Account Screen</Text></View>;
@@ -53,7 +54,7 @@ export default function TabNavigator() {
       <Tab.Screen name="Explore" component={ExploreScreen} />
       <Tab.Screen name="Cart" component={MyCart} />
       <Tab.Screen name="Favourite" component={FavoriteScreen} />
-      <Tab.Screen name="Account" component={AccountPlaceholder} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }

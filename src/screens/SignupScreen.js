@@ -1,14 +1,69 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useContext } from 'react';
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppContext } from '../context/AppContext';
 
 export default function SignupScreen({ navigation }) {
+  const { login } = useContext(AppContext);
+  
   const [showPassword, setShowPassword] = useState(false);
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const validateForm = () => {
+    if (!username.trim() || !email.trim() || !password.trim()) {
+      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ các trường thông tin.");
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert("Lỗi", "Email không đúng định dạng (ví dụ: abc@gmail.com).");
+      return false;
+    }
+
+    if (password.length < 6) {
+      Alert.alert("Lỗi", "Mật khẩu phải có ít nhất 6 ký tự để đảm bảo bảo mật.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSignup = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+
+    try {
+      const newUser = {
+        userName: username,
+        email: email,
+        createdAt: new Date().toISOString()
+      };
+
+      // Tự động đăng nhập và lưu session mã hóa vào máy
+      await login(newUser); 
+      console.log("Đăng ký thành công, dữ liệu đã được mã hóa và lưu trữ.");
+      
+    } catch (error) {
+      console.log("Lỗi hệ thống lưu trữ:", error);
+      Alert.alert("Lỗi", "Không thể khởi tạo bộ nhớ ứng dụng.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <Image source={require('../assets/orange_carrot.png')} style={styles.logo} />
         
         <View style={styles.header}>
@@ -18,16 +73,23 @@ export default function SignupScreen({ navigation }) {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Username</Text>
-          <TextInput style={styles.input} placeholder="Afsar Hossen Shuvo" />
+          <TextInput 
+            style={styles.input} 
+            placeholder="Nhập họ tên..." 
+            value={username}
+            onChangeText={setUsername}
+          />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email</Text>
           <TextInput 
             style={styles.input} 
-            placeholder="imshuvo97@gmail.com" 
+            placeholder="example@gmail.com" 
             keyboardType="email-address"
             autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
           />
         </View>
 
@@ -37,6 +99,9 @@ export default function SignupScreen({ navigation }) {
             <TextInput 
               style={[styles.input, { flex: 1, borderBottomWidth: 0 }]} 
               secureTextEntry={!showPassword} 
+              value={password}
+              onChangeText={setPassword}
+              placeholder="••••••••"
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
               <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={24} color="#7C7C7C" />
@@ -44,12 +109,20 @@ export default function SignupScreen({ navigation }) {
           </View>
         </View>
 
-        <Text style={styles.terms}>
-          By continuing you agree to our <Text style={styles.linkText}>Terms of Service</Text> and <Text style={styles.linkText}>Privacy Policy.</Text>
-        </Text>
+        <View style={styles.termsContainer}>
+          <Text style={styles.terms}>
+            By continuing you agree to our <Text style={styles.linkText}>Terms of Service</Text> and <Text style={styles.linkText}>Privacy Policy.</Text>
+          </Text>
+        </View>
 
-        <TouchableOpacity style={styles.mainBtn} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.btnText}>Sign Up</Text>
+        <TouchableOpacity 
+          style={[styles.mainBtn, loading && { opacity: 0.7 }]} 
+          onPress={handleSignup}
+          disabled={loading}
+        >
+          <Text style={styles.btnText}>
+            {loading ? "Đang xử lý..." : "Sign Up"}
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.footer}>
@@ -85,9 +158,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, 
     borderBottomColor: '#E2E2E2' 
   },
+  termsContainer: {
+    marginTop: 20,
+  },
   terms: { 
     color: '#7C7C7C', 
-    marginTop: 20, 
     lineHeight: 22, 
     fontSize: 14 
   },

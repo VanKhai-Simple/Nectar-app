@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppContext } from '../context/AppContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,22 +9,61 @@ export default function LoginScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ Email và Mật khẩu");
+      return;
+    }
+
+    if (!emailRegex.test(email)) {
+      Alert.alert("Lỗi", "Email không đúng định dạng!");
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert("Lỗi", "Mật khẩu phải có ít nhất 6 ký tự!");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const userData = {
+        email: email,
+        userName: email.split('@')[0], 
+        token: "session_" + Date.now(),
+        loginAt: Date.now()
+      };
+
+      await login(userData); 
+      console.log("Xác thực thành công. Session đã được mã hóa và lưu vào máy.");
+    } catch (error) {
+      console.error("Lỗi khi ghi dữ liệu vào Storage:", error);
+      Alert.alert("Lỗi hệ thống", "Không thể lưu thông tin đăng nhập. Vui lòng thử lại.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <Image source={require('../assets/orange_carrot.png')} style={styles.logo} />
         
         <View style={styles.header}>
-          <Text style={styles.title}>Loging</Text>
-          <Text style={styles.subtitle}>Enter your emails and password</Text>
+          <Text style={styles.title}>Login</Text>
+          <Text style={styles.subtitle}>Enter your email and password</Text>
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email</Text>
           <TextInput 
             style={styles.input} 
-            placeholder="imshuvo97@gmail.com"
+            placeholder="example@gmail.com"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -36,10 +75,11 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.label}>Password</Text>
           <View style={styles.passwordContainer}>
             <TextInput 
-              style={[styles.input, { flex: 1 }]} 
+              style={[styles.input, { flex: 1, borderBottomWidth: 0 }]}
               secureTextEntry={!showPassword}
               value={password}
               onChangeText={setPassword}
+              placeholder="••••••••"
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
               <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={24} color="#7C7C7C" />
@@ -47,18 +87,24 @@ export default function LoginScreen({ navigation }) {
           </View>
         </View>
 
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => {}}>
           <Text style={styles.forgotPass}>Forgot Password?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.mainBtn} onPress={() => login()}>
-          <Text style={styles.btnText}>Log In</Text>
+        <TouchableOpacity 
+          style={[styles.mainBtn, loading && { opacity: 0.7 }]} 
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          <Text style={styles.btnText}>
+            {loading ? "Logging in..." : "Log In"}
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.footer}>
           <Text>Don't have an account? </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-            <Text style={styles.linkText}>Singup</Text>
+            <Text style={styles.linkText}>Signup</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
