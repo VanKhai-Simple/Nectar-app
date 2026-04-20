@@ -19,6 +19,7 @@ import SearchScreen from '../screens/SearchScreen';
 import ExploreScreen from '../screens/ExploreScreen';
 import FilterScreen from '../screens/FilterScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import OrderScreen from '../screens/OrderScreen';
 // Không cần import FavoriteScreen và MyCart ở đây nếu bạn chỉ dùng chúng trong TabNavigator
 // Nhưng nếu muốn mở chúng từ một chỗ khác mà không hiện Tab, thì cứ giữ lại.
 
@@ -55,7 +56,7 @@ export default function AppNavigation() {
             <Stack.Screen name="Search" component={SearchScreen} />
             <Stack.Screen name="Explore" component={ExploreScreen} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
-
+            <Stack.Screen name="Order" component={OrderScreen} />
             {/* Cập nhật Filter ở đây để nó hiện dạng Modal */}
             <Stack.Screen 
               name="Filter" 

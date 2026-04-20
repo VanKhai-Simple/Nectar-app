@@ -23,6 +23,33 @@ export const AppProvider = ({ children }) => {
     } catch (e) { return null; }
   };
 
+  const placeOrder = async (cartItems, totalAmount) => {
+    try {
+      // 1. Tạo đơn hàng mới
+      const newOrder = {
+        id: "ORD" + Math.floor(Math.random() * 10000), 
+        date: new Date().toISOString(),
+        items: [...cartItems], // Copy danh sách sản phẩm
+        total: totalAmount,
+        status: 'Delivered'
+      };
+
+      // 2. Cập nhật vào State 'orders'
+      // Khi State này thay đổi, cái useEffect [orders] ở phía dưới 
+      // của bạn sẽ tự động mã hóa và lưu vào AsyncStorage giúp bạn.
+      setOrders((prevOrders) => [newOrder, ...prevOrders]);
+      
+      // 3. Xóa giỏ hàng trong State
+      // Tương tự, useEffect [cart] sẽ tự động lưu giỏ hàng trống vào máy.
+      setCart([]); 
+      
+      return true;
+    } catch (error) {
+      console.log("Lỗi đặt hàng chi tiết:", error);
+      return false;
+    }
+  };
+
   // --- 1. KHỞI CHẠY APP (AUTO LOGIN & LOAD DATA) ---
   useEffect(() => {
     const initApp = async () => {
@@ -151,7 +178,7 @@ export const AppProvider = ({ children }) => {
         completeOnboarding, login, logout,
         cart, addToCart, updateQuantity, removeFromCart,
         favorites, toggleFavorite,
-        orders, checkout,
+        orders, checkout,placeOrder,
       }}
     >
       {children}
