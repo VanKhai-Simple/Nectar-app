@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { AppContext } from '../context/AppContext';
 import { PRODUCTS } from '../data/data';
+import Toast from '../components/Toast';
 
 const ProductCard = ({ item, onAdd, isFav, onFav, onPress }) => (
   <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
@@ -28,13 +29,21 @@ const ProductCard = ({ item, onAdd, isFav, onFav, onPress }) => (
 );
 
 export default function HomeScreen({ navigation }) {
-  const { addToCart, favorites, toggleFavorite } = useContext(AppContext);
+  const { addToCart, favorites, toggleFavorite , toastConfig , hideToast} = useContext(AppContext);
 
   const exclusiveOffers = PRODUCTS.filter(item => item.category === 'exclusive');
   const bestSelling = PRODUCTS.filter(item => item.category === 'bestselling');
 
   return (
     <SafeAreaView style={styles.container}>
+
+      <Toast 
+        message={toastConfig.message}
+        visible={toastConfig.visible}
+        bgColor={toastConfig.bgColor}
+        onHide={hideToast}
+      />
+
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
         <View style={styles.header}>
           <Image source={require('../assets/orange_carrot.png')} style={styles.carrotLogo} />

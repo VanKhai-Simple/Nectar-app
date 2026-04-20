@@ -1,6 +1,8 @@
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CryptoJS from "crypto-js";
+import { storageService } from '../services/storageService';
+import Toast from '../components/Toast';
 
 export const AppContext = createContext();
 
@@ -53,72 +55,89 @@ export const AppProvider = ({ children }) => {
   // --- 1. KHỞI CHẠY APP (AUTO LOGIN & LOAD DATA) ---
   useEffect(() => {
     const initApp = async () => {
+      
       try {
         const firstLaunch = await AsyncStorage.getItem("alreadyLaunched");
-        const encryptedAuth = await AsyncStorage.getItem("userAuth");
-        const encryptedCart = await AsyncStorage.getItem("userCart");
-        const encryptedOrders = await AsyncStorage.getItem("userOrders");
+        
+        // DÙNG storageService để lấy dữ liệu (Nó sẽ tự chạy Console.log cho bạn)
+        const auth = await storageService.get("userAuth");
+        const cartData = await storageService.get("userCart");
+        const ordersData = await storageService.get("userOrders");
 
         setIsFirstLaunch(firstLaunch === null);
 
-        // Kiểm tra Login & Hết hạn (24h)
-        if (encryptedAuth) {
-          const auth = decryptData(encryptedAuth);
+        if (auth) {
           const now = Date.now();
-          if (auth && now - auth.loginAt < 24 * 60 * 60 * 1000) {
+          if (now - auth.loginAt < 24 * 60 * 60 * 1000) {
             setIsLoggedIn(true);
           } else {
-            await logout(); // Hết hạn thì đá ra ngoài
+            await logout(); 
           }
         }
 
-        if (encryptedCart) setCart(decryptData(encryptedCart) || []);
-        if (encryptedOrders) setOrders(decryptData(encryptedOrders) || []);
+        if (cartData) setCart(cartData);
+        if (ordersData) setOrders(ordersData);
 
       } catch (e) {
         console.error("Lỗi load dữ liệu:", e);
       } finally {
-        // Tạo hiệu ứng Loading/Skeleton 2s như yêu cầu
         setTimeout(() => setIsLoading(false), 2000);
       }
     };
     initApp();
   }, []);
 
-  // --- 2. TỰ ĐỘNG LƯU KHI STATE THAY ĐỔI (CART & ORDERS) ---
+  // --- 2. TỰ ĐỘNG LƯU (Dùng storageService để MÃ HÓA và hiện LOG) ---
   useEffect(() => {
     if (!isLoading) {
-      AsyncStorage.setItem("userCart", encryptData(cart));
+      storageService.save("userCart", cart); 
     }
   }, [cart]);
 
   useEffect(() => {
     if (!isLoading) {
-      AsyncStorage.setItem("userOrders", encryptData(orders));
+      storageService.save("userOrders", orders);
     }
   }, [orders]);
 
-  // --- 3. CHỨC NĂNG XÁC THỰC ---
-  const completeOnboarding = async () => {
-    await AsyncStorage.setItem("alreadyLaunched", "true");
-    setIsFirstLaunch(false);
-  };
-
+  // --- 3. LOGIN (Dùng storageService) ---
   const login = async (userData = {}) => {
     const authData = { ...userData, loginAt: Date.now() };
-    await AsyncStorage.setItem("userAuth", encryptData(authData));
+    // Lưu thông qua service để kích hoạt mã hóa + console.log
+    await storageService.save("userAuth", authData);
     setIsLoggedIn(true);
   };
 
   const logout = async () => {
     try {
-      // Xóa toàn bộ dữ liệu khỏi Storage theo yêu cầu
-      await AsyncStorage.multiRemove(["userAuth", "userCart", "userOrders"]);
+      await storageService.remove("userAuth");
+      await storageService.remove("userCart");
+      await storageService.remove("userOrders");
       setIsLoggedIn(false);
       setCart([]);
       setOrders([]);
-      setIsFirstLaunch(true); // Quay về Onboarding nếu muốn reset sạch
+      setIsFirstLaunch(true);
     } catch (e) { console.log(e); }
+  };
+
+  const completeOnboarding = async () => {
+      await AsyncStorage.setItem("alreadyLaunched", "true");
+      setIsFirstLaunch(false);
+    };
+
+
+  const [toastConfig, setToastConfig] = useState({
+    visible: false,
+    message: '',
+    bgColor: '#53B175'
+  });
+
+  const showToast = (message, bgColor = '#53B175') => {
+    setToastConfig({ visible: true, message, bgColor });
+  };
+
+  const hideToast = () => {
+    setToastConfig(prev => ({ ...prev, visible: false }));
   };
 
   // --- 4. CHỨC NĂNG GIỎ HÀNG ---
@@ -132,6 +151,9 @@ export const AppProvider = ({ children }) => {
       }
       return [...prev, { ...product, quantity: 1 }];
     });
+
+    // TỰ ĐỘNG HIỆN TOAST KHI THÊM THÀNH CÔNG
+    showToast(`Đã thêm ${product.name} vào giỏ hàng! 🛒`);
   };
 
   const updateQuantity = (id, type) => {
@@ -179,8 +201,15 @@ export const AppProvider = ({ children }) => {
         cart, addToCart, updateQuantity, removeFromCart,
         favorites, toggleFavorite,
         orders, checkout,placeOrder,
+        toastConfig, showToast, hideToast
       }}
     >
+      <Toast 
+        message={toastConfig.message}
+        visible={toastConfig.visible}
+        bgColor={toastConfig.bgColor}
+        onHide={hideToast}
+      />
       {children}
     </AppContext.Provider>
   );

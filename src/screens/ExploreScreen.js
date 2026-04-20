@@ -7,13 +7,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { AppContext } from '../context/AppContext';
 import { PRODUCTS } from '../data/data';
+import Toast from '../components/Toast';
 
 const { width } = Dimensions.get('window');
 
 export default function ExploreScreen({ navigation }) {
-  const { addToCart, favorites, toggleFavorite } = useContext(AppContext);
+  const { addToCart, favorites, toggleFavorite , toastConfig , hideToast} = useContext(AppContext);
   const [searchText, setSearchText] = useState('');
-  
+
   // State quản lý bộ lọc
   const [filters, setFilters] = useState({
     category: '',
@@ -28,9 +29,9 @@ export default function ExploreScreen({ navigation }) {
     return matchSearch && matchCategory && matchPrice;
   });
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({ item }) => {  
     const isFav = favorites?.some(f => f.id === item.id);
-    return (
+    return (  
       <TouchableOpacity 
         style={styles.productCard}
         onPress={() => navigation.navigate('ProductDetail', { item })}
@@ -55,6 +56,14 @@ export default function ExploreScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
+
+      <Toast 
+        message={toastConfig.message}
+        visible={toastConfig.visible}
+        bgColor={toastConfig.bgColor}
+        onHide={hideToast}
+      />
+
       <Text style={styles.headerTitle}>Find Products</Text>
       
       <View style={styles.searchRow}>

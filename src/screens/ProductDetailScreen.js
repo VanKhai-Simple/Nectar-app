@@ -14,7 +14,7 @@ import { AppContext } from '../context/AppContext';
 export default function ProductDetailScreen({ route, navigation }) {
   const { item } = route.params;
   const [quantity, setQuantity] = useState(1);
-  
+
   // 1. Lấy dữ liệu từ Context để đồng bộ Favorite và Cart
   const { addToCart, favorites, toggleFavorite } = useContext(AppContext);
 
@@ -34,12 +34,21 @@ export default function ProductDetailScreen({ route, navigation }) {
     for(let i = 0; i < quantity; i++) {
         addToCart(item);
     }
+    setToastVisible(true);
     alert(`Đã thêm ${quantity} ${item.name} vào giỏ hàng!`);
     navigation.goBack();
   };
 
   return (
     <SafeAreaView style={styles.container}>
+
+      <Toast 
+        message={toastConfig.message}
+        visible={toastConfig.visible}
+        bgColor={toastConfig.bgColor}
+        onHide={hideToast}
+      />
+
       <ScrollView showsVerticalScrollIndicator={false}>
         
         {/* 1. Header Image Section */}

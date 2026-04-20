@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppContext } from '../context/AppContext';
+import Toast from '../components/Toast';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoginScreen({ navigation }) {
@@ -10,6 +11,7 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
 
   const handleLogin = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -39,7 +41,11 @@ export default function LoginScreen({ navigation }) {
         loginAt: Date.now()
       };
 
-      await login(userData); 
+      setToastVisible(true);
+      setTimeout(async () => {
+        await login(userData); 
+      }, 800);
+
       console.log("Xác thực thành công. Session đã được mã hóa và lưu vào máy.");
     } catch (error) {
       console.error("Lỗi khi ghi dữ liệu vào Storage:", error);
@@ -51,6 +57,13 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
+
+      <Toast 
+        message="Đăng nhập thành công! Chào mừng bạn." 
+        visible={toastVisible} 
+        onHide={() => setToastVisible(false)} 
+      />
+
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <Image source={require('../assets/orange_carrot.png')} style={styles.logo} />
         

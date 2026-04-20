@@ -42,7 +42,7 @@ export default function TabNavigator() {
             iconName = focused ? 'cart' : 'cart-outline';
           } else if (route.name === 'Favourite') {
             iconName = focused ? 'heart' : 'heart-outline';
-          } else if (route.name === 'Account') {
+          } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           }
 
